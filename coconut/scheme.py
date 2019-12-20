@@ -130,7 +130,8 @@ def agg_key(params, vks, threshold=True):
     return aggr_vk
 
 
-def prepare_blind_sign(params, gamma, private_m, public_m=[]):
+def prepare_blind_sign(params, gamma, private_m, public_m=[],
+                       extra_proof=ExtraProof()):
     """
     Build cryptographic material for blind sign.
 
@@ -156,12 +157,14 @@ def prepare_blind_sign(params, gamma, private_m, public_m=[]):
     (a, b, k) = zip(*enc)
     c = list(zip(a, b))
     # build proofs
-    pi_s = make_pi_s(params, gamma, c, cm, k, r, public_m, private_m)
+    pi_s = make_pi_s(params, gamma, c, cm, k, r, public_m, private_m,
+                     extra_proof)
     Lambda = (cm, c, pi_s)
     return Lambda
 
 
-def blind_sign(params, sk, gamma, Lambda, public_m=[]):
+def blind_sign(params, sk, gamma, Lambda, public_m=[],
+               extra_proof=ExtraProof()):
     """
     Blindly sign private attributes.
 
@@ -181,7 +184,7 @@ def blind_sign(params, sk, gamma, Lambda, public_m=[]):
     (a, b) = zip(*c)
     assert (len(c)+len(public_m)) <= len(hs)
     # verify proof of correctness
-    assert verify_pi_s(params, gamma, c, cm, pi_s)
+    assert verify_pi_s(params, gamma, c, cm, pi_s, extra_proof)
     # issue signature
     h = G.hashG1(cm.export())
     t1 = [mi*h for mi in public_m]
@@ -233,7 +236,7 @@ def agg_cred(params, sigs, threshold=True):
     return aggr_sigma
 
 
-def prove_cred(params, aggr_vk, sigma, private_m):
+def prove_cred(params, aggr_vk, sigma, private_m, extra_proof=ExtraProof()):
     """
     Build cryptographic material for blind verify.
 
@@ -257,12 +260,12 @@ def prove_cred(params, aggr_vk, sigma, private_m):
     r = o.random()
     kappa = r*g2 + alpha + ec_sum([private_m[i]*beta[i] for i in range(len(private_m))])
     nu = r*h_prime
-    pi_v = make_pi_v(params, aggr_vk, sigma_prime, private_m, r)
+    pi_v = make_pi_v(params, aggr_vk, sigma_prime, private_m, r, extra_proof)
     Theta = (kappa, nu, sigma_prime, pi_v)
     return Theta
 
 
-def verify_cred(params, aggr_vk, Theta, public_m=[]):
+def verify_cred(params, aggr_vk, Theta, public_m=[], extra_proof=ExtraProof()):
     """
     Verify credentials.
 
@@ -282,7 +285,7 @@ def verify_cred(params, aggr_vk, Theta, public_m=[]):
     private_m_len = len(pi_v[1])
     assert len(public_m)+private_m_len <= len(beta)
     # verify proof of correctness
-    assert verify_pi_v(params, aggr_vk, sigma, kappa, nu, pi_v)
+    assert verify_pi_v(params, aggr_vk, sigma, kappa, nu, pi_v, extra_proof)
     # add clear text messages
     aggr = G2Elem.inf(G)
     if len(public_m) != 0:

@@ -1,6 +1,5 @@
 from coconut.scheme import *
 
-
 def test_threshold_authority():
     q = 7 # number of attributes
     private_m = [10] * 2 # private attributes
@@ -69,5 +68,7 @@ def test_multi_authority():
     # verify credentials
     assert verify_cred(params, aggr_vk, Theta, public_m=public_m)
 
-
+if __name__ == "__main__":
+    test_threshold_authority()
+    test_multi_authority()
 	
